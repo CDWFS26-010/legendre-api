@@ -10,6 +10,12 @@ const router = express.Router();
  * /marchandises:
  *   get:
  *     summary: Lister toutes les marchandises
+ *     description: |
+ *       Retourne le catalogue complet des marchandises gérées par l'entreprise.
+ *
+ *       ➡️ **Cas d'usage** : L'administrateur ou un chauffeur consulte le catalogue pour identifier les types de colis disponibles.
+ *
+ *       🔒 **Accès** : Admin et Chauffeur.
  *     tags: [Marchandises]
  *     security:
  *       - bearerAuth: []
@@ -18,10 +24,25 @@ const router = express.Router();
  *         description: Liste des marchandises
  *         content:
  *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Marchandise'
+ *             example:
+ *               - id: 00000000-0000-0000-0000-000000000020
+ *                 nom: Palette de colis
+ *                 poids: 150
+ *                 volume: 2.5
+ *               - id: 00000000-0000-0000-0000-000000000021
+ *                 nom: Carton standard
+ *                 poids: 12.5
+ *                 volume: 0.08
+ *               - id: 00000000-0000-0000-0000-000000000022
+ *                 nom: Colis fragile
+ *                 poids: 5
+ *                 volume: 0.03
+ *       403:
+ *         description: Accès refusé (client tente d'accéder)
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Accès refusé. Permissions insuffisantes.
  */
 router.get('/', authenticate, authorize('admin', 'chauffeur'), async (req, res) => {
   try {
@@ -38,6 +59,12 @@ router.get('/', authenticate, authorize('admin', 'chauffeur'), async (req, res) 
  * /marchandises/{id}:
  *   get:
  *     summary: Obtenir une marchandise par son ID
+ *     description: |
+ *       Retourne les détails d'une marchandise spécifique (nom, poids, volume).
+ *
+ *       ➡️ **Cas d'usage** : Un chauffeur consulte les détails d'une marchandise pour vérifier son poids avant chargement.
+ *
+ *       🔒 **Accès** : Admin et Chauffeur.
  *     tags: [Marchandises]
  *     security:
  *       - bearerAuth: []
@@ -46,15 +73,23 @@ router.get('/', authenticate, authorize('admin', 'chauffeur'), async (req, res) 
  *         name: id
  *         required: true
  *         schema: { type: string, format: uuid }
+ *         example: 00000000-0000-0000-0000-000000000020
  *     responses:
  *       200:
  *         description: Détails de la marchandise
  *         content:
  *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Marchandise'
+ *             example:
+ *               id: 00000000-0000-0000-0000-000000000020
+ *               nom: Palette de colis
+ *               poids: 150
+ *               volume: 2.5
  *       404:
  *         description: Marchandise introuvable
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Marchandise introuvable.
  */
 router.get('/:id', authenticate, authorize('admin', 'chauffeur'), async (req, res) => {
   const { id } = req.params;
@@ -73,6 +108,12 @@ router.get('/:id', authenticate, authorize('admin', 'chauffeur'), async (req, re
  * /marchandises:
  *   post:
  *     summary: Créer une nouvelle marchandise
+ *     description: |
+ *       Ajoute une nouvelle marchandise au catalogue de l'entreprise.
+ *
+ *       ➡️ **Cas d'usage** : L'administrateur enregistre un nouveau type de colis dans le système (ex: nouveau produit d'un client).
+ *
+ *       🔒 **Accès** : Admin uniquement.
  *     tags: [Marchandises]
  *     security:
  *       - bearerAuth: []
@@ -84,12 +125,34 @@ router.get('/:id', authenticate, authorize('admin', 'chauffeur'), async (req, re
  *             type: object
  *             required: [nom]
  *             properties:
- *               nom: { type: string, example: Palette de colis }
- *               poids: { type: number, example: 150.5 }
- *               volume: { type: number, example: 2.3 }
+ *               nom: { type: string }
+ *               poids: { type: number }
+ *               volume: { type: number }
+ *           examples:
+ *             Palette lourde:
+ *               value:
+ *                 nom: Palette industrielle
+ *                 poids: 500
+ *                 volume: 4.8
+ *             Petit colis:
+ *               value:
+ *                 nom: Petit colis postal
+ *                 poids: 2.5
+ *                 volume: 0.01
  *     responses:
  *       201:
- *         description: Marchandise créée
+ *         description: Marchandise créée avec succès
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Marchandise créée.
+ *               id: d4e5f6a7-b8c9-0123-defg-234567890123
+ *       400:
+ *         description: Nom manquant
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Le nom est obligatoire.
  */
 router.post('/', authenticate, authorize('admin'), async (req, res) => {
   const { nom, poids, volume } = req.body;
@@ -114,6 +177,12 @@ router.post('/', authenticate, authorize('admin'), async (req, res) => {
  * /marchandises/{id}:
  *   put:
  *     summary: Mettre à jour une marchandise
+ *     description: |
+ *       Met à jour les informations d'une marchandise existante (nom, poids, volume).
+ *
+ *       ➡️ **Cas d'usage** : L'administrateur corrige le poids d'une marchandise suite à une erreur de saisie.
+ *
+ *       🔒 **Accès** : Admin uniquement.
  *     tags: [Marchandises]
  *     security:
  *       - bearerAuth: []
@@ -122,6 +191,7 @@ router.post('/', authenticate, authorize('admin'), async (req, res) => {
  *         name: id
  *         required: true
  *         schema: { type: string, format: uuid }
+ *         example: 00000000-0000-0000-0000-000000000020
  *     requestBody:
  *       required: true
  *       content:
@@ -132,11 +202,23 @@ router.post('/', authenticate, authorize('admin'), async (req, res) => {
  *               nom: { type: string }
  *               poids: { type: number }
  *               volume: { type: number }
+ *           example:
+ *             nom: Palette de colis (mise à jour)
+ *             poids: 160
+ *             volume: 2.8
  *     responses:
  *       200:
  *         description: Marchandise mise à jour
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Marchandise mise à jour.
  *       404:
  *         description: Marchandise introuvable
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Marchandise introuvable.
  */
 router.put('/:id', authenticate, authorize('admin'), async (req, res) => {
   const { id } = req.params;

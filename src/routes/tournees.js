@@ -10,17 +10,42 @@ const router = express.Router();
  * /tournees:
  *   get:
  *     summary: Lister toutes les tournées
+ *     description: |
+ *       Retourne toutes les tournées avec le nom du chauffeur et le nombre de livraisons associées.
+ *
+ *       ➡️ **Cas d'usage** : L'administrateur consulte le tableau de bord pour avoir une vue d'ensemble de toutes les tournées du jour.
+ *
+ *       🔒 **Accès** : Admin uniquement.
  *     tags: [Tournées]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: Liste des tournées
+ *         description: Liste de toutes les tournées
+ *         content:
+ *           application/json:
+ *             example:
+ *               - id: 00000000-0000-0000-0000-000000000030
+ *                 date: "2026-04-14"
+ *                 chauffeur_nom: Martin
+ *                 chauffeur_prenom: Pierre
+ *                 nb_livraisons: 2
+ *               - id: 00000000-0000-0000-0000-000000000031
+ *                 date: "2026-04-14"
+ *                 chauffeur_nom: Leroy
+ *                 chauffeur_prenom: Sophie
+ *                 nb_livraisons: 1
+ *       403:
+ *         description: Accès refusé
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Accès refusé. Permissions insuffisantes.
  */
 router.get('/', authenticate, authorize('admin'), async (req, res) => {
   try {
     const [rows] = await db.query(
-      `SELECT t.id, t.date, 
+      `SELECT t.id, t.date,
               c.nom AS chauffeur_nom, c.prenom AS chauffeur_prenom,
               COUNT(l.id) AS nb_livraisons
        FROM tournees t
@@ -41,6 +66,12 @@ router.get('/', authenticate, authorize('admin'), async (req, res) => {
  * /tournees:
  *   post:
  *     summary: Créer une nouvelle tournée
+ *     description: |
+ *       Crée une tournée pour un chauffeur à une date donnée.
+ *
+ *       ➡️ **Cas d'usage** : Chaque soir, l'administrateur prépare les tournées du lendemain en assignant chaque chauffeur à une tournée.
+ *
+ *       🔒 **Accès** : Admin uniquement.
  *     tags: [Tournées]
  *     security:
  *       - bearerAuth: []
@@ -52,13 +83,31 @@ router.get('/', authenticate, authorize('admin'), async (req, res) => {
  *             type: object
  *             required: [date, chauffeur_id]
  *             properties:
- *               date: { type: string, format: date, example: "2026-04-14" }
+ *               date: { type: string, format: date }
  *               chauffeur_id: { type: string, format: uuid }
+ *           example:
+ *             date: "2026-04-15"
+ *             chauffeur_id: 00000000-0000-0000-0000-000000000002
  *     responses:
  *       201:
- *         description: Tournée créée
+ *         description: Tournée créée avec succès
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Tournée créée.
+ *               id: b2c3d4e5-f6a7-8901-bcde-f12345678901
  *       400:
- *         description: Données invalides
+ *         description: Données manquantes
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: date et chauffeur_id sont obligatoires.
+ *       404:
+ *         description: Chauffeur introuvable
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Chauffeur introuvable.
  */
 router.post('/', authenticate, authorize('admin'), async (req, res) => {
   const { date, chauffeur_id } = req.body;
@@ -84,7 +133,13 @@ router.post('/', authenticate, authorize('admin'), async (req, res) => {
  * @swagger
  * /tournees/{id}:
  *   get:
- *     summary: Obtenir une tournée avec ses livraisons
+ *     summary: Obtenir une tournée par son ID
+ *     description: |
+ *       Retourne les détails d'une tournée avec les informations du chauffeur assigné.
+ *
+ *       ➡️ **Cas d'usage** : Pierre Martin consulte les détails de sa tournée du jour avant de partir.
+ *
+ *       🔒 **Accès** : Admin (toutes les tournées) ou Chauffeur (sa propre tournée uniquement).
  *     tags: [Tournées]
  *     security:
  *       - bearerAuth: []
@@ -93,11 +148,30 @@ router.post('/', authenticate, authorize('admin'), async (req, res) => {
  *         name: id
  *         required: true
  *         schema: { type: string, format: uuid }
+ *         example: 00000000-0000-0000-0000-000000000030
  *     responses:
  *       200:
  *         description: Détails de la tournée
+ *         content:
+ *           application/json:
+ *             example:
+ *               id: 00000000-0000-0000-0000-000000000030
+ *               date: "2026-04-14"
+ *               chauffeur_id: 00000000-0000-0000-0000-000000000002
+ *               chauffeur_nom: Martin
+ *               chauffeur_prenom: Pierre
+ *       403:
+ *         description: Chauffeur tente d'accéder à la tournée d'un autre chauffeur
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Accès refusé.
  *       404:
  *         description: Tournée introuvable
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Tournée introuvable.
  */
 router.get('/:id', authenticate, authorize('admin', 'chauffeur'), async (req, res) => {
   const { id } = req.params;
@@ -114,7 +188,6 @@ router.get('/:id', authenticate, authorize('admin', 'chauffeur'), async (req, re
 
     if (tournee.length === 0) return res.status(404).json({ message: 'Tournée introuvable.' });
 
-    // Un chauffeur ne peut voir que ses propres tournées
     if (req.user.role === 'chauffeur' && tournee[0].chauffeur_id !== req.user.id) {
       return res.status(403).json({ message: 'Accès refusé.' });
     }
@@ -131,6 +204,15 @@ router.get('/:id', authenticate, authorize('admin', 'chauffeur'), async (req, re
  * /tournees/{id}/livraisons:
  *   get:
  *     summary: Obtenir toutes les livraisons d'une tournée
+ *     description: |
+ *       Retourne la liste complète des livraisons d'une tournée, avec pour chaque livraison :
+ *       les informations client, l'adresse de livraison, l'heure prévue, le statut et les marchandises à livrer.
+ *
+ *       ➡️ **Cas d'usage principal** : C'est la route la plus importante pour un chauffeur. Chaque matin, Pierre Martin consulte sa tournée pour voir toutes ses livraisons du jour dans l'ordre, avec les adresses et les colis à livrer.
+ *
+ *       ➡️ **Cas d'usage système tiers** : Un WMS ou ERP récupère automatiquement les données de livraison pour les intégrer dans son système de suivi.
+ *
+ *       🔒 **Accès** : Admin (toutes les tournées) ou Chauffeur (sa propre tournée uniquement).
  *     tags: [Tournées]
  *     security:
  *       - bearerAuth: []
@@ -139,11 +221,62 @@ router.get('/:id', authenticate, authorize('admin', 'chauffeur'), async (req, re
  *         name: id
  *         required: true
  *         schema: { type: string, format: uuid }
+ *         example: 00000000-0000-0000-0000-000000000030
  *     responses:
  *       200:
- *         description: Liste des livraisons de la tournée
+ *         description: Liste des livraisons avec clients, adresses et marchandises
+ *         content:
+ *           application/json:
+ *             example:
+ *               - id: 00000000-0000-0000-0000-000000000040
+ *                 heure_prevue: "2026-04-14T09:00:00.000Z"
+ *                 statut: en_attente
+ *                 client_nom: Dupont Marc
+ *                 client_email: m.dupont@email.fr
+ *                 client_telephone: "0633445566"
+ *                 rue: 12 rue de la Paix
+ *                 ville: Chartres
+ *                 code_postal: "28000"
+ *                 pays: France
+ *                 marchandises:
+ *                   - id: 00000000-0000-0000-0000-000000000020
+ *                     nom: Palette de colis
+ *                     poids: 150
+ *                     volume: 2.5
+ *                     quantite: 1
+ *                   - id: 00000000-0000-0000-0000-000000000021
+ *                     nom: Carton standard
+ *                     poids: 12.5
+ *                     volume: 0.08
+ *                     quantite: 3
+ *               - id: 00000000-0000-0000-0000-000000000041
+ *                 heure_prevue: "2026-04-14T10:30:00.000Z"
+ *                 statut: en_attente
+ *                 client_nom: Bernard Alice
+ *                 client_email: a.bernard@email.fr
+ *                 client_telephone: "0644556677"
+ *                 rue: 5 avenue Victor Hugo
+ *                 ville: Dreux
+ *                 code_postal: "28100"
+ *                 pays: France
+ *                 marchandises:
+ *                   - id: 00000000-0000-0000-0000-000000000022
+ *                     nom: Colis fragile
+ *                     poids: 5
+ *                     volume: 0.03
+ *                     quantite: 2
+ *       403:
+ *         description: Chauffeur tente d'accéder à la tournée d'un autre chauffeur
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Accès refusé.
  *       404:
  *         description: Tournée introuvable
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Tournée introuvable.
  */
 router.get('/:id/livraisons', authenticate, authorize('admin', 'chauffeur'), async (req, res) => {
   const { id } = req.params;
@@ -168,7 +301,6 @@ router.get('/:id/livraisons', authenticate, authorize('admin', 'chauffeur'), asy
       [id]
     );
 
-    // Ajouter les marchandises pour chaque livraison
     for (const liv of livraisons) {
       const [marchandises] = await db.query(
         `SELECT m.id, m.nom, m.poids, m.volume, lm.quantite
