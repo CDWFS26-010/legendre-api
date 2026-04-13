@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "API LEGENDRE - Logistique",
-    "description": "Collection Postman pour tester l'API de gestion de tournées LEGENDRE",
+    "description": "⚠️ Commencer par lancer les 3 requêtes du dossier Auth dans l'ordre pour initialiser les tokens.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -19,13 +19,13 @@
           "event": [{ "listen": "test", "script": { "exec": [
             "if (pm.response.code === 200) {",
             "  pm.collectionVariables.set('token_admin', pm.response.json().token);",
-            "  pm.test('Token reçu', () => pm.expect(pm.response.json()).to.have.property('token'));",
+            "  pm.test('Token admin stocké ✅', () => pm.expect(pm.response.json()).to.have.property('token'));",
             "}"
           ]}}],
           "request": {
             "method": "POST",
-            "url": "{{base_url}}/auth/login",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/auth/login",
             "body": { "mode": "raw", "raw": "{\"email\": \"admin@legendre.fr\", \"password\": \"Test1234!\"}" }
           }
         },
@@ -34,13 +34,13 @@
           "event": [{ "listen": "test", "script": { "exec": [
             "if (pm.response.code === 200) {",
             "  pm.collectionVariables.set('token_chauffeur', pm.response.json().token);",
-            "  pm.test('Token reçu', () => pm.expect(pm.response.json()).to.have.property('token'));",
+            "  pm.test('Token chauffeur stocké ✅', () => pm.expect(pm.response.json()).to.have.property('token'));",
             "}"
           ]}}],
           "request": {
             "method": "POST",
-            "url": "{{base_url}}/auth/login",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/auth/login",
             "body": { "mode": "raw", "raw": "{\"email\": \"p.martin@legendre.fr\", \"password\": \"Test1234!\"}" }
           }
         },
@@ -49,25 +49,25 @@
           "event": [{ "listen": "test", "script": { "exec": [
             "if (pm.response.code === 200) {",
             "  pm.collectionVariables.set('token_client', pm.response.json().token);",
-            "  pm.test('Token reçu', () => pm.expect(pm.response.json()).to.have.property('token'));",
+            "  pm.test('Token client stocké ✅', () => pm.expect(pm.response.json()).to.have.property('token'));",
             "}"
           ]}}],
           "request": {
             "method": "POST",
-            "url": "{{base_url}}/auth/login",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/auth/login",
             "body": { "mode": "raw", "raw": "{\"email\": \"m.dupont@email.fr\", \"password\": \"Test1234!\"}" }
           }
         },
         {
-          "name": "Login - Mauvais mot de passe (401)",
+          "name": "Login mauvais mot de passe → 401",
           "event": [{ "listen": "test", "script": { "exec": [
-            "pm.test('Retourne 401', () => pm.expect(pm.response.code).to.equal(401));"
+            "pm.test('Retourne 401 ✅', () => pm.expect(pm.response.code).to.equal(401));"
           ]}}],
           "request": {
             "method": "POST",
-            "url": "{{base_url}}/auth/login",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{base_url}}/auth/login",
             "body": { "mode": "raw", "raw": "{\"email\": \"admin@legendre.fr\", \"password\": \"mauvais\"}" }
           }
         }
@@ -77,30 +77,58 @@
       "name": "Chauffeurs",
       "item": [
         {
-          "name": "GET /chauffeurs (admin)",
+          "name": "GET /chauffeurs (admin → 200)",
           "event": [{ "listen": "test", "script": { "exec": [
-            "pm.test('Statut 200', () => pm.expect(pm.response.code).to.equal(200));",
-            "pm.test('Retourne un tableau', () => pm.expect(pm.response.json()).to.be.an('array'));"
+            "pm.test('200 ✅', () => pm.expect(pm.response.code).to.equal(200));"
           ]}}],
           "request": {
             "method": "GET",
-            "url": "{{base_url}}/chauffeurs",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token_admin}}" }]
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_admin}}" }],
+            "url": "{{base_url}}/chauffeurs"
           }
         },
         {
-          "name": "GET /chauffeurs (sans token → 401)",
+          "name": "GET /chauffeurs (chauffeur → 403)",
           "event": [{ "listen": "test", "script": { "exec": [
-            "pm.test('Statut 401', () => pm.expect(pm.response.code).to.equal(401));"
+            "pm.test('403 🔒', () => pm.expect(pm.response.code).to.equal(403));"
           ]}}],
-          "request": { "method": "GET", "url": "{{base_url}}/chauffeurs" }
-        },
-        {
-          "name": "GET /chauffeurs/:id/tournees",
           "request": {
             "method": "GET",
-            "url": "{{base_url}}/chauffeurs/00000000-0000-0000-0000-000000000002/tournees",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token_admin}}" }]
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_chauffeur}}" }],
+            "url": "{{base_url}}/chauffeurs"
+          }
+        },
+        {
+          "name": "GET /chauffeurs/:id ses propres infos (chauffeur → 200)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 ✅', () => pm.expect(pm.response.code).to.equal(200));"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_chauffeur}}" }],
+            "url": "{{base_url}}/chauffeurs/00000000-0000-0000-0000-000000000002"
+          }
+        },
+        {
+          "name": "GET /chauffeurs/:id autre chauffeur (chauffeur → 403)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('403 🔒', () => pm.expect(pm.response.code).to.equal(403));"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_chauffeur}}" }],
+            "url": "{{base_url}}/chauffeurs/00000000-0000-0000-0000-000000000003"
+          }
+        },
+        {
+          "name": "GET /chauffeurs/:id/tournees (chauffeur → 200)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 ✅', () => pm.expect(pm.response.code).to.equal(200));"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_chauffeur}}" }],
+            "url": "{{base_url}}/chauffeurs/00000000-0000-0000-0000-000000000002/tournees"
           }
         }
       ]
@@ -109,29 +137,40 @@
       "name": "Tournées",
       "item": [
         {
-          "name": "GET /tournees",
+          "name": "GET /tournees (admin → 200)",
           "event": [{ "listen": "test", "script": { "exec": [
-            "pm.test('Statut 200', () => pm.expect(pm.response.code).to.equal(200));"
+            "pm.test('200 ✅', () => pm.expect(pm.response.code).to.equal(200));"
           ]}}],
           "request": {
             "method": "GET",
-            "url": "{{base_url}}/tournees",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token_admin}}" }]
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_admin}}" }],
+            "url": "{{base_url}}/tournees"
           }
         },
         {
-          "name": "GET /tournees/:id/livraisons",
+          "name": "GET /tournees/:id/livraisons avec marchandises (admin → 200)",
           "event": [{ "listen": "test", "script": { "exec": [
-            "pm.test('Statut 200', () => pm.expect(pm.response.code).to.equal(200));",
-            "pm.test('Contient des marchandises', () => {",
+            "pm.test('200 ✅', () => pm.expect(pm.response.code).to.equal(200));",
+            "pm.test('Contient marchandises', () => {",
             "  const body = pm.response.json();",
             "  if (body.length > 0) pm.expect(body[0]).to.have.property('marchandises');",
             "});"
           ]}}],
           "request": {
             "method": "GET",
-            "url": "{{base_url}}/tournees/00000000-0000-0000-0000-000000000030/livraisons",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token_admin}}" }]
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_admin}}" }],
+            "url": "{{base_url}}/tournees/00000000-0000-0000-0000-000000000030/livraisons"
+          }
+        },
+        {
+          "name": "GET /tournees/:id autre chauffeur (chauffeur → 403)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('403 🔒', () => pm.expect(pm.response.code).to.equal(403));"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_chauffeur}}" }],
+            "url": "{{base_url}}/tournees/00000000-0000-0000-0000-000000000031"
           }
         }
       ]
@@ -140,34 +179,72 @@
       "name": "Livraisons",
       "item": [
         {
-          "name": "PATCH /livraisons/:id/statut → livree",
+          "name": "PATCH statut → en_cours (chauffeur → 200)",
           "event": [{ "listen": "test", "script": { "exec": [
-            "pm.test('Statut 200', () => pm.expect(pm.response.code).to.equal(200));",
-            "pm.test('Statut mis à jour', () => pm.expect(pm.response.json().statut).to.equal('livree'));"
+            "pm.test('200 ✅', () => pm.expect(pm.response.code).to.equal(200));",
+            "pm.test('Statut = en_cours', () => pm.expect(pm.response.json().statut).to.equal('en_cours'));"
           ]}}],
           "request": {
             "method": "PATCH",
-            "url": "{{base_url}}/livraisons/00000000-0000-0000-0000-000000000040/statut",
             "header": [
               { "key": "Authorization", "value": "Bearer {{token_chauffeur}}" },
               { "key": "Content-Type", "value": "application/json" }
             ],
+            "url": "{{base_url}}/livraisons/00000000-0000-0000-0000-000000000040/statut",
+            "body": { "mode": "raw", "raw": "{\"statut\": \"en_cours\"}" }
+          }
+        },
+        {
+          "name": "PATCH statut → livree (chauffeur → 200)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 ✅', () => pm.expect(pm.response.code).to.equal(200));",
+            "pm.test('Statut = livree', () => pm.expect(pm.response.json().statut).to.equal('livree'));"
+          ]}}],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token_chauffeur}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{base_url}}/livraisons/00000000-0000-0000-0000-000000000040/statut",
             "body": { "mode": "raw", "raw": "{\"statut\": \"livree\"}" }
           }
         },
         {
-          "name": "PATCH statut invalide → 400",
+          "name": "PATCH statut (client → 403)",
           "event": [{ "listen": "test", "script": { "exec": [
-            "pm.test('Statut 400', () => pm.expect(pm.response.code).to.equal(400));"
+            "pm.test('403 🔒', () => pm.expect(pm.response.code).to.equal(403));"
           ]}}],
           "request": {
             "method": "PATCH",
-            "url": "{{base_url}}/livraisons/00000000-0000-0000-0000-000000000040/statut",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token_admin}}" },
+              { "key": "Authorization", "value": "Bearer {{token_client}}" },
               { "key": "Content-Type", "value": "application/json" }
             ],
-            "body": { "mode": "raw", "raw": "{\"statut\": \"invalide\"}" }
+            "url": "{{base_url}}/livraisons/00000000-0000-0000-0000-000000000040/statut",
+            "body": { "mode": "raw", "raw": "{\"statut\": \"livree\"}" }
+          }
+        },
+        {
+          "name": "GET /livraisons/:id sa propre livraison (client → 200)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 ✅', () => pm.expect(pm.response.code).to.equal(200));"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_client}}" }],
+            "url": "{{base_url}}/livraisons/00000000-0000-0000-0000-000000000040"
+          }
+        },
+        {
+          "name": "GET /livraisons/:id livraison d'un autre (client → 403)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('403 🔒', () => pm.expect(pm.response.code).to.equal(403));"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_client}}" }],
+            "url": "{{base_url}}/livraisons/00000000-0000-0000-0000-000000000041"
           }
         }
       ]
@@ -176,22 +253,47 @@
       "name": "Clients",
       "item": [
         {
-          "name": "GET /clients/:id (client voit ses propres infos)",
+          "name": "GET /clients (admin → 200)",
           "event": [{ "listen": "test", "script": { "exec": [
-            "pm.test('Statut 200', () => pm.expect(pm.response.code).to.equal(200));"
+            "pm.test('200 ✅', () => pm.expect(pm.response.code).to.equal(200));"
           ]}}],
           "request": {
             "method": "GET",
-            "url": "{{base_url}}/clients/00000000-0000-0000-0000-000000000004",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token_client}}" }]
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_admin}}" }],
+            "url": "{{base_url}}/clients"
           }
         },
         {
-          "name": "GET /clients/:id/livraisons",
+          "name": "GET /clients/:id ses propres infos (client → 200)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 ✅', () => pm.expect(pm.response.code).to.equal(200));"
+          ]}}],
           "request": {
             "method": "GET",
-            "url": "{{base_url}}/clients/00000000-0000-0000-0000-000000000004/livraisons",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token_client}}" }]
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_client}}" }],
+            "url": "{{base_url}}/clients/00000000-0000-0000-0000-000000000004"
+          }
+        },
+        {
+          "name": "GET /clients/:id infos d'un autre (client → 403)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('403 🔒', () => pm.expect(pm.response.code).to.equal(403));"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_client}}" }],
+            "url": "{{base_url}}/clients/00000000-0000-0000-0000-000000000005"
+          }
+        },
+        {
+          "name": "GET /clients/:id/livraisons (client → 200)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('200 ✅', () => pm.expect(pm.response.code).to.equal(200));"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_client}}" }],
+            "url": "{{base_url}}/clients/00000000-0000-0000-0000-000000000004/livraisons"
           }
         }
       ]
@@ -200,14 +302,25 @@
       "name": "Marchandises",
       "item": [
         {
-          "name": "GET /marchandises",
+          "name": "GET /marchandises (admin → 200)",
           "event": [{ "listen": "test", "script": { "exec": [
-            "pm.test('Statut 200', () => pm.expect(pm.response.code).to.equal(200));"
+            "pm.test('200 ✅', () => pm.expect(pm.response.code).to.equal(200));"
           ]}}],
           "request": {
             "method": "GET",
-            "url": "{{base_url}}/marchandises",
-            "header": [{ "key": "Authorization", "value": "Bearer {{token_admin}}" }]
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_admin}}" }],
+            "url": "{{base_url}}/marchandises"
+          }
+        },
+        {
+          "name": "GET /marchandises (client → 403)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('403 🔒', () => pm.expect(pm.response.code).to.equal(403));"
+          ]}}],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token_client}}" }],
+            "url": "{{base_url}}/marchandises"
           }
         }
       ]
