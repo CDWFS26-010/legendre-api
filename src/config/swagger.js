@@ -30,21 +30,6 @@ API sécurisée de gestion de tournées et livraisons pour l'entreprise LEGENDRE
 | Client | m.dupont@email.fr | Test1234! |
 | Client | a.bernard@email.fr | Test1234! |
 
----
-
-## 📋 Codes de réponse
-
-> ⚠️ La section **"Responses"** liste **tous les codes possibles** à titre documentaire.
-> Le **vrai résultat** de votre requête est toujours dans **"Server response"**.
-
-| Code | Signification |
-|------|--------------|
-| 200 | Succès |
-| 201 | Ressource créée |
-| 400 | Données invalides ou manquantes |
-| 401 | Token manquant — connectez-vous d'abord |
-| 403 | Accès refusé — votre rôle ne permet pas cette action |
-| 404 | Ressource introuvable |
 
 ---
 
