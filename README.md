@@ -72,18 +72,20 @@ Ensuite :
 
 La base `legendre_db` avec toutes les tables et les données de test sera créée automatiquement.
 
-### 5. Générer les hash bcrypt des mots de passe
+### 5. Initialiser les mots de passe (seed)
 
-Les comptes de test ont besoin de vrais hash bcrypt. Lancer cette commande dans le terminal :
+Les mots de passe dans le SQL sont des placeholders. Lancer cette commande pour générer les vrais hash bcrypt et les insérer automatiquement :
 
 ```bash
-node -e "const bcrypt = require('bcryptjs'); const hash = bcrypt.hashSync('Test1234!', 12); console.log(hash);"
+node seed.js
 ```
 
-Copier le hash affiché, puis dans phpMyAdmin → base `legendre_db` → onglet **SQL**, exécuter :
-
-```sql
-UPDATE utilisateurs SET password = 'COLLER_LE_HASH_ICI';
+Vous devriez voir :
+```
+🌱 Démarrage du seed...
+🔐 Hash bcrypt généré
+✅ Mots de passe mis à jour pour tous les comptes
+🚀 Seed terminé ! Vous pouvez lancer : npm run dev
 ```
 
 ### 6. Démarrer le serveur
