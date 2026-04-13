@@ -6,7 +6,53 @@ const options = {
     info: {
       title: 'API Logistique LEGENDRE',
       version: '1.0.0',
-      description: 'API REST sécurisée de gestion de tournées et livraisons pour l\'entreprise LEGENDRE',
+      description: `
+
+
+API sécurisée de gestion de tournées et livraisons pour l'entreprise LEGENDRE.
+
+---
+
+## 🚀 Comment tester cette API
+
+**Étape 1** — Se connecter via \`POST /auth/login\` et copier le token retourné.
+
+**Étape 2** — Cliquer sur **Authorize 🔓** en haut à droite et coller le token.
+
+**Étape 3** — Tester les routes !
+
+### Comptes de test disponibles
+| Rôle | Email | Mot de passe |
+|------|-------|--------------|
+| Admin | admin@legendre.fr | Test1234! |
+| Chauffeur | p.martin@legendre.fr | Test1234! |
+| Chauffeur | s.leroy@legendre.fr | Test1234! |
+| Client | m.dupont@email.fr | Test1234! |
+| Client | a.bernard@email.fr | Test1234! |
+
+---
+
+## 📋 Codes de réponse
+
+> ⚠️ La section **"Responses"** liste **tous les codes possibles** à titre documentaire.
+> Le **vrai résultat** de votre requête est toujours dans **"Server response"**.
+
+| Code | Signification |
+|------|--------------|
+| 200 | Succès |
+| 201 | Ressource créée |
+| 400 | Données invalides ou manquantes |
+| 401 | Token manquant — connectez-vous d'abord |
+| 403 | Accès refusé — votre rôle ne permet pas cette action |
+| 404 | Ressource introuvable |
+
+---
+
+## 🔒 Rôles et accès
+- **Admin** : accès complet à toutes les ressources
+- **Chauffeur** : accès à ses propres tournées et livraisons uniquement
+- **Client** : accès à ses propres livraisons uniquement
+`,
     },
     servers: [{ url: 'http://localhost:3000', description: 'Serveur de développement' }],
     components: {
@@ -71,16 +117,6 @@ const options = {
             message: { type: 'string' },
           },
         },
-        Adresse: {
-        type: 'object',
-        properties: {
-          id: { type: 'string', format: 'uuid' },
-          rue: { type: 'string' },
-          ville: { type: 'string' },
-          code_postal: { type: 'string' },
-          pays: { type: 'string' },
-        },
-      },
       },
     },
     security: [{ bearerAuth: [] }],
